@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+# Part of Odoo. See LICENSE file for full copyright and licensing details.
+
 {
     'name': 'Force HTTPS URL Root',
     'version': '17.0.1.0.0',
@@ -16,5 +19,4 @@
     'application': False,
     'auto_install': False,
     'license': 'LGPL-3',
-    'post_init_hook': 'post_init_hook',
 } 
