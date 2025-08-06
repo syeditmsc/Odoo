@@ -61,12 +61,6 @@ class ForceHttpsUrlPatch(models.AbstractModel):
     _name = 'force.https.url.patch'
     _description = 'Force HTTPS URL Patch'
     
-    def __init__(self, pool, cr):
-        """Initialize the patch when the model is loaded"""
-        super().__init__(pool, cr)
-        # Apply the patch when the model is loaded
-        patch_request_url_root()
-    
     @api.model
     def _patch_url_root(self):
         """Method to apply the patch (called during module installation)"""
