@@ -3,7 +3,7 @@
 
 import logging
 from odoo import api, fields, models
-from odoo.http import request
+from odoo.http import request, WebRequest
 
 _logger = logging.getLogger(__name__)
 
@@ -11,46 +11,42 @@ _logger = logging.getLogger(__name__)
 def patch_request_url_root():
     """
     Monkey patch the request object to force HTTPS URLs.
-    This function patches the httprequest property to always return HTTPS URLs.
+    This function patches the WebRequest.__init__ method to force HTTPS URLs.
     """
-    if not hasattr(request, '_original_httprequest'):
-        # Store the original property to avoid double patching
-        request._original_httprequest = request.__class__.__dict__.get('httprequest')
+    if not hasattr(WebRequest, '_original_init'):
+        # Store the original __init__ method
+        WebRequest._original_init = WebRequest.__init__
         
-        # Create a property that forces HTTPS
-        def https_url_root_property(self):
-            """Property that forces HTTPS URLs"""
-            try:
-                original_request = request._original_httprequest.__get__(self, self.__class__)
-                if original_request and hasattr(original_request, 'url_root'):
-                    url_root = original_request.url_root
+        def https_init(self, httprequest):
+            """Modified __init__ that forces HTTPS URLs"""
+            # Call the original __init__
+            WebRequest._original_init(self, httprequest)
+            
+            # Force HTTPS on the httprequest's url_root
+            if hasattr(self, 'httprequest') and self.httprequest:
+                if hasattr(self.httprequest, 'url_root'):
+                    url_root = self.httprequest.url_root
                     if url_root and url_root.startswith('http://'):
                         # Replace http:// with https://
                         url_root = url_root.replace('http://', 'https://', 1)
                         # Update the original request's url_root
-                        original_request.url_root = url_root
+                        self.httprequest.url_root = url_root
                         _logger.debug(f"Forced HTTPS URL: {url_root}")
-                    return original_request
-                return original_request
-            except Exception as e:
-                _logger.error(f"Error in HTTPS URL patch: {e}")
-                # Fallback to original behavior
-                return request._original_httprequest.__get__(self, self.__class__)
         
         # Apply the patch
-        request.__class__.httprequest = property(https_url_root_property)
-        _logger.info("Successfully patched request.httprequest to force HTTPS URLs")
+        WebRequest.__init__ = https_init
+        _logger.info("Successfully patched WebRequest.__init__ to force HTTPS URLs")
 
 
 def unpatch_request_url_root():
     """
     Remove the monkey patch and restore the original behavior.
     """
-    if hasattr(request, '_original_httprequest'):
+    if hasattr(WebRequest, '_original_init'):
         try:
-            # Restore the original property
-            request.__class__.httprequest = request._original_httprequest
-            delattr(request, '_original_httprequest')
+            # Restore the original __init__ method
+            WebRequest.__init__ = WebRequest._original_init
+            delattr(WebRequest, '_original_init')
             _logger.info("Successfully removed HTTPS URL patch")
         except Exception as e:
             _logger.error(f"Error removing HTTPS URL patch: {e}")
