@@ -1,0 +1,12 @@
+<odoo>
+    <record id="view_company_form_inherit_plaid" model="ir.ui.view">
+        <field name="name">company.form.inherit.plaid</field>
+        <field name="model">res.company</field>
+        <field name="inherit_id" ref="base.view_company_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='currency_id']" position="after">
+                <field name="plaid_allowed_country_ids" widget="many2many_tags" domain="[('code', '!=', False)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
